@@ -1,0 +1,41 @@
+[project]
+name = "va-dp3-client"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+dependencies = [
+    "pytorch3d",
+    "robotic-toolbox",
+]
+
+[dependency-groups]
+dev = [
+    "black>=24.8.0",
+    "debugpy>=1.8.15",
+    "ptpython>=3.0.30",
+    "pyarmor>=9.1.8",
+    "pytest>=8.3.5",
+    "tqdm>=4.67.1",
+    "ipykernel>=6.30.0",
+    "ipywidgets>=8.1.7",
+]
+
+torch = [
+    "torch==2.4.1",
+    "torchvision==0.19.1",
+    "ultralytics>=8.3.170",
+]
+
+[tool.uv.sources]
+# uv add /home/dell/code/3D-Diffusion-Policy/third_party/pytorch3d_simplified --no-build-isolation
+pytorch3d = { path = "/home/dell/code/3D-Diffusion-Policy/third_party/pytorch3d_simplified" }
+robotic-toolbox = { path = "/home/dell/code/phimate/robotic_toolbox", editable = true }
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true
+
+[[tool.uv.index]]
+name = "torch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true

@@ -1,0 +1,34 @@
+##################################
+# VA DP3 app config
+# author: wel2018
+# date: 2025-08-14
+##################################
+
+# 详细日志
+VERBOSE: 1
+
+# debugpy 线程调试模式
+THREAD_DEBUG: 0
+
+# 性能测试
+BENCHMARK: 0
+
+# 相机型号
+camtype: "L515"
+
+# 多相机列表（多相机需要设置 camtype: "S"，该字段才生效）
+camtypes_for_S_mode: ["D435", "D405"]
+
+# 任务类型
+tasktype: pick_and_place
+
+# 工作区范围（世界坐标系，单位 mm）
+workspace: 
+    x: [400, 650]
+    y: [-50, 50]
+
+# 时间步时间间隔（ms）
+timestep_intv: 10
+
+# 是否使用增强版夹爪
+use_gripper_pro: 1
