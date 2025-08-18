@@ -1,9 +1,10 @@
 import threading
 import numpy as np
+import qt_material.themes
 from toolbox.qt import qtbase
 from toolbox.cam3d.cam3d_base import Camera3DBase
 from .ui.ui_form import Ui_DemoWindow
-from . import AppConfig, logger, VERBOSE, THREAD_DEBUG, APPCFG, APPSLOT
+from . import AppConfig, logger, APPCFG
 from .bgtask.pc_viz import RealTimePointCloudViewer
 
 
@@ -18,51 +19,42 @@ class MainWindow(qtbase.IMainWindow):
     def __init__(self, parent = None):
         ui = self.ui = Ui_DemoWindow()
         super().__init__(ui, parent)
-
-        # 初始化
         self.init(
-            confcache_name=APPSLOT,
-            apptitle=AppConfig.title,
             ui_logger=ui.txt_log,
             logger=logger,
-            fontsize=AppConfig.fontsize,
+            appcfg=AppConfig
         )
-
-        # 绑定点击事件
+        self.post_init()
+        self.set_theme("blue", 0)
         self.bind_clicked(ui.btn_run, self.play)
+        self.add_log("程序初始化完成")
 
-        # 摄像头
-        zero_img = np.zeros((480, 640, 3), dtype=np.uint8)
-        self.zero_img = qtbase.QPixmap(qtbase.cv2qt(zero_img))
-        self.reset_viz()
-
-        #self.tcost = Timecost(0, 1)
+    def post_init(self):
         self.pressed_keys = set()
         self.appcfg = APPCFG
         self.camtype = APPCFG['camtype']
         
+        # 摄像头
+        zero_img = np.zeros((480, 640, 3), dtype=np.uint8)
+        self.zero_img = qtbase.QPixmap(qtbase.cv2qt(zero_img))
+        self.reset_viz()
         from toolbox.cam3d import load_cam3d
         camtypes_for_S_mode = APPCFG.get('camtypes_for_S_mode', [])
         self.cam: Camera3DBase = load_cam3d(
-            self.camtype, camtypes_for_S_mode, is_start=1, is_warmup=1)
+            self.camtype, 
+            camtypes_for_S_mode, 
+            is_start=1, 
+            is_warmup=1)
+        
         self.robot_cam_th = qtbase.CameraTask(
             qtbase.Camera3DWrapper(self.cam))
         self.robot_cam_th.bind(on_data=self.get_obs)
         self.add_th(self.TH_CAM, self.robot_cam_th, 1)
-        self.add_log("程序初始化完成")
-        # 检查服务器是否能够正常连接
-        # self.add_timer(self.TIMER_ROBOT_STATE, 100, self.refresh_state, 1)
-        self.cam_read_conf = {
-            "is_sync": 1,
-            "is_bgr": 1,
-            "read_color": 1,
-            "read_depth": 1,
-            "read_pc": 1
-        }
         
+        # 点云可视化
         self.pc_viz_widget = RealTimePointCloudViewer(self.cam)
         self.replace_widget(self.ui.wd_bottom, self.pc_viz_widget)
-
+    
 
     def play(self):
         """执行任务理解逻辑"""

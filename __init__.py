@@ -1,27 +1,19 @@
 """视觉模仿学习推理客户端"""
 
-import os
 from toolbox.qt import qtbase
 from toolbox.core.logbase import get_logger
-from toolbox.core.file_op import yaml_load
+APPCFG = qtbase.get_appcfg(__file__)
 
 
 AppConfig = qtbase.QAppConfig(
-    name = "VA 3D Diffusion Policy Realtime Inference Client",
+    name = "VA DP3 推理程序",
     name_en = "VA 3D Diffusion Policy Realtime Inference Client",
     date="2025-08-18",
     version = "1.0.0",
-    fontsize = 14
+    fontsize = 14,
+    slot="va_dp3_client",
+    appcfg=APPCFG,
 )
+
 print(f"AppConfig={AppConfig}")
-
-
-# 配置 -----------------------------------------------------------
-APPSLOT = "va_dp3_client"
-logger = get_logger(prefix="", name=APPSLOT)
-cur_dir = os.path.dirname(os.path.abspath(__file__))
-APPCFG: dict = yaml_load(f"{cur_dir}/appcfg.yaml")
-print(f"APPCFG={APPCFG}")
-THREAD_DEBUG = APPCFG['THREAD_DEBUG']
-VERBOSE = APPCFG['VERBOSE']
-BENCHMARK = APPCFG['BENCHMARK']
+logger = get_logger(AppConfig.slot)
