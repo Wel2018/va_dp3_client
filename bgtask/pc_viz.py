@@ -90,7 +90,7 @@ class PointCloudCanvas(FigureCanvas):
         # 绘制新散点
         self.scatter = self.ax.scatter(
             xyz[:, 0], xyz[:, 1], xyz[:, 2],
-            c=rgb, marker='.', s=1  # 点大小与原函数一致 # type: ignore
+            c=rgb, marker='.', s=10  # 点大小与原函数一致 # type: ignore
         )
         
         # 更新视角（如果指定）
@@ -105,24 +105,26 @@ class PointCloudVizTask(qtbase.QAsyncTask):
     sig_data = qtbase.Signal(dict)
     
     def __init__(self, cfg: dict, cam: Camera3DBase):
-        super().__init__()
+        super().__init__(cfg)
         self.cam = cam
         self.down = PointCloudDownSampler()
         self.cam3d_trans = Cam3dCoordTrans(cam)
         self.pcp = PointCloudProcessor(self.down, self.cam3d_trans)
         
-    def obs_process(self, pc): # -> dict[Any, Any]:
-        pc = self.pcp.world(pc)
+    def obs_process(self, points): # -> dict[Any, Any]:
+        points = self.pcp.world(points)
         cfgpath = "/home/dell/code/phimate/.cache/pointcloud_op.yaml"
         group = "L515_crop"
-        pc = self.pcp.crop(pc, cfgpath, group)
+        points = self.pcp.crop(points, cfgpath, group)
         # # print(f"crop by workspace = {pc.shape}")
         # pc = self.pcp.farthest_point_sampling(pc, use_cuda=1, num_points=4096)
-        points = self.pcp.down.random_downsample_to_N(pc, 1024)
-        return pc
+        # points = self.pcp.down.random_downsample_to_N(pc, 1024)
+        points = self.pcp.fps(points, use_cuda=1, num_points=1024)
+        return points
     
     def run(self):
         # while 1:
+        self.msleep(50)
         cam_data = self.cam._cam_data
         pc = cam_data['pointcloud']
         pc = self.obs_process(pc)
@@ -152,7 +154,7 @@ class RealTimePointCloudViewer(QWidget):
         self.init_canvas()
         
         # 添加控制组件（按钮、视角调整等）
-        self.init_controls()
+        # self.init_controls()
         
         # 初始化定时器（用于模拟实时数据更新）
         # self.timer = QTimer(self)
@@ -168,7 +170,7 @@ class RealTimePointCloudViewer(QWidget):
         self.toolbar = NavigationToolbar(self.canvas, self)
         
         # 将画布和工具栏添加到布局
-        self.main_layout.addWidget(self.toolbar)
+        # self.main_layout.addWidget(self.toolbar)
         self.main_layout.addWidget(self.canvas)
 
     def init_controls(self):
@@ -209,7 +211,7 @@ class RealTimePointCloudViewer(QWidget):
         #     self.is_updating = True
         ...
 
-    def update_point_cloud(self):
+    def update_point_cloud_bg(self):
         self.task = PointCloudVizTask(cfg={}, cam=self.cam)
         self.task.sig_data.connect(self._update_point_cloud)
         self.task.start()

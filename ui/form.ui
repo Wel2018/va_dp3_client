@@ -137,7 +137,7 @@
           <item row="0" column="1">
            <widget class="QPushButton" name="btn_arm_zero">
             <property name="text">
-             <string>机械臂回零位</string>
+             <string>reset</string>
             </property>
            </widget>
           </item>
@@ -157,6 +157,13 @@
              <widget class="QPushButton" name="btn_run">
               <property name="text">
                <string>执行</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_stop">
+              <property name="text">
+               <string>x</string>
               </property>
              </widget>
             </item>

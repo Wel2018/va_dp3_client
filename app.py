@@ -1,14 +1,15 @@
 import threading
 import numpy as np
-import qt_material.themes
 from toolbox.qt import qtbase
+from toolbox.qt import QTaskCamera
+from toolbox.cam3d.cam3d_base import Camera3DWrapper
 from toolbox.cam3d.cam3d_base import Camera3DBase
 from .ui.ui_form import Ui_DemoWindow
-from . import AppConfig, logger, APPCFG
+from . import q_appcfg, logger
 from .bgtask.pc_viz import RealTimePointCloudViewer
 
 
-class MainWindow(qtbase.IMainWindow):
+class MainWindow(qtbase.QApp):
     """应用具体实现"""
     # 定时器和线程名称
     TH_CAM = "cam"
@@ -18,47 +19,47 @@ class MainWindow(qtbase.IMainWindow):
 
     def __init__(self, parent = None):
         ui = self.ui = Ui_DemoWindow()
-        super().__init__(ui, parent)
-        self.init(
-            ui_logger=ui.txt_log,
-            logger=logger,
-            appcfg=AppConfig
-        )
+        super().__init__(ui, parent, q_appcfg)
+        self.pre_init()
+        self.init(ui_logger=self.ui.txt_log, logger=logger)
+        self.load_cam3d()
         self.post_init()
-        self.set_theme("blue", 0)
-        self.bind_clicked(ui.btn_run, self.play)
-        self.add_log("程序初始化完成")
-
-    def post_init(self):
-        self.pressed_keys = set()
-        self.appcfg = APPCFG
-        self.camtype = APPCFG['camtype']
-        
+    
+    def load_cam3d(self):
         # 摄像头
         zero_img = np.zeros((480, 640, 3), dtype=np.uint8)
         self.zero_img = qtbase.QPixmap(qtbase.cv2qt(zero_img))
         self.reset_viz()
         from toolbox.cam3d import load_cam3d
-        camtypes_for_S_mode = APPCFG.get('camtypes_for_S_mode', [])
+        # camtypes_for_S_mode = self.appcfg.get('camtypes_for_S_mode', [])
         self.cam: Camera3DBase = load_cam3d(
-            self.camtype, 
-            camtypes_for_S_mode, 
+            self.APPCFG_DICT['camtype'], [], 
             is_start=1, 
             is_warmup=1)
         
-        self.robot_cam_th = qtbase.CameraTask(
-            qtbase.Camera3DWrapper(self.cam))
+        cam3d_wrapper = Camera3DWrapper(self.cam)
+        self.robot_cam_th = QTaskCamera(cam3d_wrapper)
         self.robot_cam_th.bind(on_data=self.get_obs)
         self.add_th(self.TH_CAM, self.robot_cam_th, 1)
         
         # 点云可视化
         self.pc_viz_widget = RealTimePointCloudViewer(self.cam)
         self.replace_widget(self.ui.wd_bottom, self.pc_viz_widget)
-    
+        
+
+    def post_init(self):
+        self.set_theme("blue", 0)
+        self.bind_clicked(self.ui.btn_run, self.play)
+        self.bind_clicked(self.ui.btn_stop, self.stop_play)
+        self.add_log("程序初始化完成", color="green")
+        self.pc_viz_widget.update_point_cloud_bg()
+
+    def stop_play(self):
+        ...
 
     def play(self):
         """执行任务理解逻辑"""
-        self.pc_viz_widget.update_point_cloud()
+        self.pc_viz_widget.update_point_cloud_bg()
         
     def reset_viz(self):
         self.pix_left = self.zero_img
@@ -80,6 +81,23 @@ class MainWindow(qtbase.IMainWindow):
         self.pix_left = qtbase.QPixmap(qtbase.cv2qt(frames['v1']))
         self.pix_right = qtbase.QPixmap(qtbase.cv2qt(frames['v2']))
 
+    def keyPressEvent(self, event: qtbase.QKeyEvent):
+        super().keyPressEvent(event)
+        # print(self.pressed_keys)
+        # 热重载 ctrl+r
+        if self.is_keys_pressed([
+            qtbase.qt_keys.Key_Control,
+            qtbase.qt_keys.Key_R
+        ]):
+            self.hot_reload()
+        
+            
+    def hot_reload(self):
+        self.pre_init()
+        self.init()
+        self.post_init()
+        self.add_log("hot reload")
+        
 
 def main():
     import sys
