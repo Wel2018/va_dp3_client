@@ -12,3 +12,7 @@
 > [!note] 硬件平台
 > - 机械臂 Franka Research 3
 > - 摄像头 Realsense L515 / Orbbec Femto Bolt
+
+## 主界面
+
+![ui](doc/UI.png)
