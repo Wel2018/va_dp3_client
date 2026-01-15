@@ -5,7 +5,10 @@ from toolbox.qt import QTaskCamera
 from toolbox.cam3d.cam3d_base import Camera3DWrapper
 from toolbox.cam3d.cam3d_base import Camera3DBase
 from .ui.ui_form import Ui_DemoWindow
-from . import q_appcfg, logger
+from . import q_appcfg
+from loguru import logger
+from toolbox.core.log import LogHelper
+from toolbox.core.log import printc
 from .bgtask.pc_viz import RealTimePointCloudViewer
 
 
@@ -100,6 +103,8 @@ class MainWindow(qtbase.QApp):
         
 
 def main():
+    LogHelper.init(q_appcfg.slot)
+    printc(f"{q_appcfg}")
     import sys
     qapp = qtbase.QApplication(sys.argv)
     # 设置全局默认字体
